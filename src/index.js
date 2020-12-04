@@ -1,6 +1,6 @@
 const Discord = require('discord.js');
 
-const { PREFIX, BOT_TOKEN } = require('./config.json');
+const { PREFIX, BOT_TOKEN } = require('./config');
 const commands = require('./commands');
 
 const {
