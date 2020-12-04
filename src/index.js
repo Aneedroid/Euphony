@@ -12,7 +12,6 @@ const {
 } = require('./operations');
 
 const client = new Discord.Client();
-console.log('BOT_TOKEN: ', BOT_TOKEN);
 
 client.login(BOT_TOKEN);
 
