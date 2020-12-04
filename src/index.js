@@ -18,9 +18,9 @@ client.login(BOT_TOKEN);
 const serverData = new Map();
 
 client.on('message', (message) => {
-  if (message.author.bot) { return; }
+  if (message.author.bot) return;
 
-  if (!message.content.startsWith(PREFIX)) { return; }
+  if (!message.content.startsWith(PREFIX)) return;
 
   const commandBody = message.content.slice(PREFIX.length);
   const args = commandBody.split(' ');
