@@ -1,6 +1,7 @@
+const express = require('express');
 const Discord = require('discord.js');
 
-const { PREFIX, BOT_TOKEN } = require('./config');
+const { PREFIX, BOT_TOKEN, PORT } = require('./config');
 const commands = require('./commands');
 
 const {
@@ -10,6 +11,15 @@ const {
 const {
   play, stop, skip, addToPlaylist,
 } = require('./operations');
+
+// This next express bit is required for heroku.
+// if an app doesn't run like express, heroku kills the containers.
+const app = express();
+
+app.get('/', (req, res) => res.send('Euphony is up!'));
+
+// eslint-disable-next-line no-console
+app.listen(PORT, () => console.log(`Example app listening at port ${PORT}`));
 
 const client = new Discord.Client();
 
