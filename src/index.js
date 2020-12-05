@@ -53,7 +53,9 @@ client.on('message', (message) => {
 
   if (command === SKIP.name) {
     skip(message, currentServerData);
-    play(message, currentServerData.songs[0], serverData);
+    if (currentServerData.songs.length > 0) {
+      play(message, currentServerData.songs[0], serverData);
+    }
   }
 
   if (command === PLAYLIST.name) {
