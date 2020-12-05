@@ -9,8 +9,8 @@ const {
 } = commands;
 
 const {
-  play, stop, skip, addToPlaylist,
-} = require('./operations');
+  play, stop, skip, addToPlaylist, isUrlString,
+} = require('./helpers');
 
 // This next express bit is required for heroku.
 // if an app doesn't run like express, heroku kills the containers.
@@ -44,7 +44,7 @@ client.on('message', (message) => {
 
   if (command === PLAY.name) {
     const playArgs = args.reduce((acc, currVal) => `${acc} ${currVal}`);
-    addToPlaylist(message, playArgs, currentServerData, serverData);
+    addToPlaylist(message, playArgs, currentServerData, serverData, isUrlString(playArgs));
   }
 
   if (command === STOP.name) {

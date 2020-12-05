@@ -6,8 +6,8 @@ module.exports = {
   },
   PLAY: {
     name: 'play',
-    desc: 'Plays a song of your choice.',
-    usage: '!play enga area ulla varada',
+    desc: 'Plays a song of your choice. Arguments can be a URL or a search query',
+    usage: '!play enga area ulla varada \n !play https://www.youtube.com/watch?v=F586JktJyEg&list=RDF586JktJyEg&start_radio=1',
   },
   STOP: {
     name: 'stop',

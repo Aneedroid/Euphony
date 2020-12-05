@@ -1,7 +1,7 @@
 const ytdl = require('ytdl-core');
 const yts = require('yt-search');
 
-const play = (message, song, serverData) => {
+const playSong = (message, song, serverData) => {
   if (!song) {
     serverData.delete(message.guild.id);
     return message.channel.send('Cannot find this song!');
@@ -12,6 +12,9 @@ const play = (message, song, serverData) => {
     .play(ytdl(song.url))
     .on('finish', () => {
       currentServerData.songs.shift();
+      if (currentServerData.songs.length > 0) {
+        playSong(message, currentServerData.songs[0], serverData);
+      }
     })
     .on('error', (error) => /* eslint-disable-line no-console */console.error(error));
 
@@ -39,7 +42,7 @@ const skip = (message, currentServerData) => {
   return null;
 };
 
-const addToPlaylist = async (message, args, currentServerData, serverData) => {
+const addToPlaylist = async (message, args, currentServerData, serverData, isUrl) => {
   const voiceChannel = message.member.voice.channel;
 
   if (!voiceChannel) { return message.channel.send('Mundam! You need to be in a voice channel!'); }
@@ -50,12 +53,23 @@ const addToPlaylist = async (message, args, currentServerData, serverData) => {
     return message.channel.send('Pesa permission tharanum da dei');
   }
 
-  const songInfo = await yts(args);
-  const trimmedSongs = songInfo.videos.slice(0, 1);
-  const song = {
-    title: trimmedSongs[0].title,
-    url: trimmedSongs[0].url,
-  };
+  let songInfo;
+  let song;
+
+  if (isUrl) {
+    songInfo = await ytdl.getInfo(args);
+    song = {
+      title: songInfo.videoDetails.title,
+      url: songInfo.videoDetails.video_url,
+    };
+  } else {
+    songInfo = await yts(args);
+    const trimmedSongs = songInfo.videos.slice(0, 1);
+    song = {
+      title: trimmedSongs[0].title,
+      url: trimmedSongs[0].url,
+    };
+  }
 
   if (!currentServerData) {
     const queueContruct = {
@@ -78,7 +92,7 @@ const addToPlaylist = async (message, args, currentServerData, serverData) => {
       const connection = await voiceChannel.join();
       queueContruct.connection = connection;
       // Calling the play function to start a song
-      play(message, queueContruct.songs[0], serverData);
+      playSong(message, queueContruct.songs[0], serverData);
     } catch (err) {
       // Printing the error message if the bot fails to join the voicechat
       // eslint-disable-next-line no-console
@@ -94,9 +108,20 @@ const addToPlaylist = async (message, args, currentServerData, serverData) => {
   return null;
 };
 
+const isUrlString = (args) => {
+  const regexPattern = new RegExp('^(https?:\\/\\/)?' // protocol
+    + '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' // domain name
+    + '((\\d{1,3}\\.){3}\\d{1,3}))' // OR ip (v4) address
+    + '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' // port and path
+    + '(\\?[;&a-z\\d%_.~+=-]*)?' // query string
+    + '(\\#[-a-z\\d_]*)?$', 'i'); // fragment locator
+  return !!regexPattern.test(args);
+};
+
 module.exports = {
-  play,
+  play: playSong,
   stop,
   skip,
   addToPlaylist,
+  isUrlString,
 };
