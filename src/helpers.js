@@ -1,6 +1,9 @@
 const ytdl = require('ytdl-core');
 const yts = require('yt-search');
 
+// can remove if container wont die off every once in a while when there are no requests
+const https = require('https');
+
 const playSong = (message, song, serverData) => {
   if (!song) {
     serverData.delete(message.guild.id);
@@ -10,6 +13,30 @@ const playSong = (message, song, serverData) => {
   const dispatcher = currentServerData
     .connection
     .play(ytdl(song.url))
+    .on('start', () => {
+      // can remove if container wont die off every once in a while when there are no requests
+      setTimeout(() => {
+        // eslint-disable-next-line no-console
+        console.log('Making the periodic API call to Health URL');
+        https.get('https://thawing-cliffs-08354.herokuapp.com/', (resp) => {
+          let data = '';
+
+          // A chunk of data has been recieved.
+          resp.on('data', (chunk) => {
+            data += chunk;
+          });
+
+          // The whole response has been received. Print out the result.
+          resp.on('end', () => {
+            // eslint-disable-next-line no-console
+            console.log(JSON.parse(data).explanation);
+          });
+        }).on('error', (err) => {
+          // eslint-disable-next-line no-console
+          console.log(`Error: ${err.message}`);
+        });
+      }, 60000);
+    })
     .on('finish', () => {
       currentServerData.songs.shift();
       if (currentServerData.songs.length > 0) {
