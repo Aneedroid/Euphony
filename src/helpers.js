@@ -4,6 +4,33 @@ const yts = require('yt-search');
 // can remove if container wont die off every once in a while when there are no requests
 const https = require('https');
 
+const pingRecursively = (currentServerData) => {
+  // can remove if container wont die off every once in a while when there are no requests
+  setTimeout(() => {
+    if (currentServerData) {
+      // eslint-disable-next-line no-console
+      console.log('Making the periodic API call to Health URL');
+      https.get('https://thawing-cliffs-08354.herokuapp.com/', (resp) => {
+        let data = '';
+
+        // A chunk of data has been recieved.
+        resp.on('data', (chunk) => {
+          data += chunk;
+        });
+
+        // The whole response has been received. Print out the result.
+        resp.on('end', () => {
+          // eslint-disable-next-line no-console
+          console.log(data);
+        });
+      }).on('error', (err) => {
+        // eslint-disable-next-line no-console
+        console.log(`Error: ${err.message}`);
+      });
+    }
+  }, 5 * 60000);
+};
+
 const playSong = (message, song, serverData) => {
   if (!song) {
     serverData.delete(message.guild.id);
@@ -13,30 +40,6 @@ const playSong = (message, song, serverData) => {
   const dispatcher = currentServerData
     .connection
     .play(ytdl(song.url))
-    .on('start', () => {
-      // can remove if container wont die off every once in a while when there are no requests
-      setTimeout(() => {
-        // eslint-disable-next-line no-console
-        console.log('Making the periodic API call to Health URL');
-        https.get('https://thawing-cliffs-08354.herokuapp.com/', (resp) => {
-          let data = '';
-
-          // A chunk of data has been recieved.
-          resp.on('data', (chunk) => {
-            data += chunk;
-          });
-
-          // The whole response has been received. Print out the result.
-          resp.on('end', () => {
-            // eslint-disable-next-line no-console
-            console.log(JSON.parse(data).explanation);
-          });
-        }).on('error', (err) => {
-          // eslint-disable-next-line no-console
-          console.log(`Error: ${err.message}`);
-        });
-      }, 60000);
-    })
     .on('finish', () => {
       currentServerData.songs.shift();
       if (currentServerData.songs.length > 0) {
@@ -56,7 +59,7 @@ const stop = (message, currentServerData) => {
 
   // eslint-disable-next-line no-param-reassign
   currentServerData.songs = [];
-  currentServerData.connection.dispatcher.end();
+  if (currentServerData.connection.dispatcher) currentServerData.connection.dispatcher.end();
   currentServerData.voiceChannel.leave();
   return null;
 };
@@ -120,6 +123,8 @@ const addToPlaylist = async (message, args, currentServerData, serverData, isUrl
       queueContruct.connection = connection;
       // Calling the play function to start a song
       playSong(message, queueContruct.songs[0], serverData);
+
+      // pingRecursively(currentServerData);
     } catch (err) {
       // Printing the error message if the bot fails to join the voicechat
       // eslint-disable-next-line no-console
@@ -128,7 +133,14 @@ const addToPlaylist = async (message, args, currentServerData, serverData, isUrl
       return message.channel.send('Error joining voice chat');
     }
   } else {
+    let playImmediate = false;
+    if (currentServerData && currentServerData.songs.length === 0) {
+      playImmediate = true;
+    }
     currentServerData.songs.push(song);
+    if (playImmediate) {
+      playSong(message, song, serverData);
+    }
     return message.channel.send(`${song.title} has been added to the playlist!`);
   }
 
@@ -151,4 +163,5 @@ module.exports = {
   skip,
   addToPlaylist,
   isUrlString,
+  pingRecursively,
 };
